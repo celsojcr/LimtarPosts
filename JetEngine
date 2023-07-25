@@ -1,0 +1,33 @@
+/* COMO USAR
+
+Cole o trecho abaixo no functions.php do seu tema
+Na linha if (get_post_type($post_id) === 'carro') { escolhe o nome de seu post type para que deseja que o a função funcione corretamente.
+Na linha if (in_array('plano_gratis', $user->roles)) { altere a slug para o tipo de usuario
+Na linha $expiracao_timestamp = strtotime('+30 days'); altere a quantidade de dia ou minutos
+
+*/
+
+function agendar_expiracao_post_carro($post_id) {
+    // Verifica se é um post do tipo "carro"
+    if (get_post_type($post_id) === 'carro') {
+        // Verifica se o usuário tem o papel "plano grátis"
+        $user_id = get_post_field('post_author', $post_id);
+        $user = get_userdata($user_id);
+        if (in_array('plano_grtis', $user->roles)) {
+            // Calcula o timestamp de 30 dias a partir do momento atual
+            $expiracao_timestamp = strtotime('+30 days');
+
+            // Agenda o evento para mover o post para a lixeira
+            wp_schedule_single_event($expiracao_timestamp, 'mover_para_lixeira_event', array($post_id));
+        }
+    }
+}
+
+add_action('publish_carro', 'agendar_expiracao_post_carro');
+
+function mover_para_lixeira($post_id) {
+    // Move o post para a lixeira
+    wp_trash_post($post_id);
+}
+
+add_action('mover_para_lixeira_event', 'mover_para_lixeira');
